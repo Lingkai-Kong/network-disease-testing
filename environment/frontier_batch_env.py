@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 import copy
-from typing import Optional, Dict, Tuple, Iterable
+from typing import Optional, Dict, Tuple
 
 import networkx as nx
 import numpy as np
@@ -29,7 +29,7 @@ class BinaryFrontierEnvBatch:
         cc_dict: Optional[dict] = None,
         cc_root: Optional[list] = None,
         rng_seed: int = 314159,
-        budget: Optional[int] = None
+        budget: Optional[int] = None,
     ) -> None:
         assert 0.0 < discount_factor < 1.0
         self.P = copy.deepcopy(P)
@@ -37,6 +37,7 @@ class BinaryFrontierEnvBatch:
         assert self.n == P.n
         self.discount_factor = float(discount_factor)
         self.rng = np.random.default_rng(rng_seed)
+        # relabel nodes as X0, X1, ...
         self.G = nx.relabel_nodes(G, {i: f"X{i}" for i in range(self.n)})
         self.tests_done = 0
         self.status = np.full(self.n, -1, dtype=int)  # -1 = unknown, 0/1 = revealed
@@ -97,7 +98,12 @@ class BinaryFrontierEnvBatch:
     # ---------- probabilities ----------
 
     def get_status_and_factors(self) -> Tuple[np.ndarray, Dict, Dict]:
-        # note: copies unary/pairwise dicts so caller cannot mutate P
+        """
+        Returns:
+          status (copy),
+          unary_factors (dict: "X_i" -> factor),
+          pairwise_factors (dict: frozenset({"X_i","X_j"}) -> factor)
+        """
         return self.status.copy(), self.P.unary_factors.copy(), self.P.pairwise_factors.copy()
 
     def compute_conditional_probability(self, query_dict: dict, observation_dict: dict) -> float:
@@ -169,11 +175,17 @@ class BinaryFrontierEnvBatch:
         self._last_valid_mask_np = next_mask.copy()
         return self.status.copy(), next_mask, reward, done
 
+    # Optional: single-index helper (kept for compatibility)
+    def step_single(self, action_idx: int) -> Tuple[np.ndarray, np.ndarray, float, bool]:
+        vec = np.zeros(self.n, dtype=int)
+        vec[int(action_idx)] = 1
+        return self.step(vec)
+
     # ---------- extra methods for DQN + BatchGraphApproximator ----------
 
     def observation(self) -> np.ndarray:
         """
-        Observation vector used as scenario embedding.
+        Observation vector used as scenario embedding in approximator.
         Here we simply use the current status (cast to float).
         """
         return self.status.astype(float).copy()
@@ -220,7 +232,7 @@ class BinaryFrontierEnvBatch:
                 a[drop] = 0.0
         return a
 
-    # alias for older naming patterns
+    # aliases for older naming patterns
     def get_random_action(self) -> np.ndarray:
         return self.random_feasible_action()
 
