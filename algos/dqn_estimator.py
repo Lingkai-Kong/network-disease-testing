@@ -102,28 +102,6 @@ Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'cost'))  # use 'cost' not 'reward' because MIP is a minimizer
 
 
-class ReplayMemory(object):
-    """
-    replay buffer, for experience replay:
-    - stores the transitions that the agent observes, allowing us to reuse this data later
-    - by sampling from it randomly, the transitions that build up a batch are decorrelated
-    - has been shown to greatly stabilize and improve the DQN training procedure
-    """ 
-    def __init__(self, capacity):
-        self.memory = deque([], maxlen=capacity)
-
-    def push(self, state, action, next_state, cost):
-        """ save a transition """
-        self.memory.append(Transition(state.unsqueeze(0), action.unsqueeze(0), next_state.detach().unsqueeze(0), cost.unsqueeze(0)))
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-    
-    def get_idx(self, idx):
-        return self.memory[idx]
-
-    def __len__(self):
-        return len(self.memory)
 
 
 ##############################################################

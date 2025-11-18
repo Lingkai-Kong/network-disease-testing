@@ -225,7 +225,9 @@ if __name__ == '__main__':
         plt.tight_layout()
         # plt.show()
 
-        # plot average reward
+        # plot average reward per method as a bar plot (each bar = mean reward of an algorithm)
+        # This is different from the previous line plot (which plots each timestep's reward sorted, per algorithm)
+        # The bar plot below summarizes the *overall* average (mean) reward for each algorithm
         plt.figure()
         bar_x = np.arange(len(algo_rewards))
         plt.bar(bar_x, [algo_rewards[algo].mean() for algo in algo_rewards], 
@@ -233,7 +235,7 @@ if __name__ == '__main__':
         plt.xticks(bar_x, [algo for algo in algo_rewards], rotation=30)
         plt.ylabel('Average expected reward')
         plt.xlabel('Method')
-        plt.title(f'{rmab}')
+        plt.title(f'Mean reward per method: {rmab}')
         plt.tight_layout()
         
         plt.savefig(f'{out_dir}/{prefix}avg_reward_{rmab}_seed{args.seed}_{timestamp}.png')
