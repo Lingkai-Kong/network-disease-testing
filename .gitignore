@@ -1,0 +1,43 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+AFEG/
+venv/
+env/
+ENV/
+
+# Results and outputs
+results_disease/
+plots/
+*.png
+*.pdf
+
+# Data files
+*.pkl
+*.csv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gurobi license (sensitive)
+gurobi.lic
+
+# Logs
+*.log
+
