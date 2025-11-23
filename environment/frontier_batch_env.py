@@ -7,7 +7,7 @@ from typing import Optional, Dict, Tuple
 import networkx as nx
 import numpy as np
 
-from core.abstract_joint_probability_class import AbstractJointProbabilityClass
+from environment.abstract_joint_probability_class import AbstractJointProbabilityClass
 
 
 class BinaryFrontierEnvBatch:

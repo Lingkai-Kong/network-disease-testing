@@ -11,6 +11,7 @@ but:
   - The MLP in the MILP sees [a, g(s)] as input.
 """
 
+import os
 import math
 import random
 import datetime
@@ -261,6 +262,7 @@ class DQNSolver:
         """
         env: BinaryFrontierEnvBatch (or compatible graph environment).
         """
+        print('  [DQN Init] Setting up environment...')
         self.env = env
         self.budget = env.budget
 
@@ -285,10 +287,13 @@ class DQNSolver:
             self.N_EPISODES = 100
 
         # initialize environment once to infer dimensions
+        print('  [DQN Init] Inferring dimensions...')
         status, _ = self.env.reset()
         self.n_actions = len(status)
+        print(f'  [DQN Init] Action dimension: {self.n_actions}')
 
         # graph adapter
+        print('  [DQN Init] Building graph adapter...')
         self.graph_adapter = GraphEnvAdapter(self.env)
         data0 = self.graph_adapter.build_graph(status)
         node_in_dim = data0.x.size(-1)
@@ -296,22 +301,29 @@ class DQNSolver:
             edge_in_dim = data0.edge_attr.size(-1)
         else:
             edge_in_dim = 4  # default fallback
+        print(f'  [DQN Init] Node features: {node_in_dim}, Edge features: {edge_in_dim}')
 
         # networks (initialized in train())
+        print('  [DQN Init] Creating neural networks...')
         self.policy_net = PolicyQNet(node_in_dim, edge_in_dim, self.n_actions, g_dim=64, hidden=128).to(device)
         self.target_net = PolicyQNet(node_in_dim, edge_in_dim, self.n_actions, g_dim=64, hidden=128).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
+        print(f'  [DQN Init] Networks created (device: {device})')
 
+        print('  [DQN Init] Setting up optimizer and scheduler...')
         self.optimizer = optim.AdamW(self.policy_net.parameters(), lr=self.LR, eps=self.ADAM_EPS, amsgrad=True)
         self.criterion = nn.SmoothL1Loss(reduction="none")
         self.scheduler = ExponentialLR(self.optimizer, gamma=self.SCHEDULER_GAMMA)
 
+        print('  [DQN Init] Creating replay buffer and memoizer...')
         self.memory = ReplayBuffer(self.MEMORY_SIZE)
         self.memoizer = Memoizer(refresh=self.MEMOIZER_REFRESH)
 
         # approximator (MILP builder)
+        print('  [DQN Init] Building MILP approximator (this may take a moment)...')
         approximator_cls = self.env.get_approximator()
         self.approximator = approximator_cls(self.env, model_type="NN-E")
+        print('  [DQN Init] MILP approximator ready')
 
         self.step_count = 0
         self.optimizer_loss = []
@@ -332,20 +344,27 @@ class DQNSolver:
     # --------------------------------------------------------
     # Action selection: eps-greedy + MILP
     # --------------------------------------------------------
-    def select_action(self, status_np: np.ndarray) -> torch.Tensor:
+    def select_action(self, status_np: np.ndarray, verbose: bool = False) -> torch.Tensor:
         eps_sample = random.random()
         eps_threshold = self.EPS_END + (self.EPS_START - self.EPS_END) * \
             math.exp(-1.0 * self.step_count / self.EPS_DECAY)
         self.step_count += 1
 
         if eps_sample < eps_threshold:
+            if verbose:
+                print(f"    -> Random action (eps={eps_threshold:.3f})")
             return self._random_action()
 
         # exploitation: MILP with Q-network
+        if verbose:
+            print(f"    -> MILP action (eps={eps_threshold:.3f})")
+            print(f"       Building graph and embedding state...")
         with torch.no_grad():
             data_s = self._build_graph_from_status(status_np)
             g_s = self.policy_net.embed_state(data_s).detach().cpu().numpy().astype(np.float32)
 
+            if verbose:
+                print(f"       Calling MILP solver (gap=0.02, time_limit=60s)...")
             results = self.approximator.approximate(
                 network=self.policy_net.action_mlp,       # MLP over [a, g_s]
                 mipper_cls=Net2MIPPerScenario,
@@ -356,6 +375,8 @@ class DQNSolver:
                 scenario_embedding=g_s,                   # this is g(s)
                 scenario_probs=None,
             )
+            if verbose:
+                print(f"       MILP solved!")
             action = results["sol"]
             if not torch.is_tensor(action):
                 action = torch.tensor(action, dtype=torch.float32)
@@ -445,14 +466,26 @@ class DQNSolver:
             horizon = self.env.n  # reveal all eventually if you want
 
         print("----------- begin main loop")
-        print(f"  replay capacity {self.MEMORY_SIZE}")
+        print(f"  episodes: {self.N_EPISODES}")
+        print(f"  horizon: {horizon} steps/episode")
+        print(f"  replay capacity: {self.MEMORY_SIZE}")
+        print(f"  device: {device}")
+        print("  starting episode 1...")
+        
         for ep in tqdm.tqdm(range(self.N_EPISODES)):
+            if ep == 0:
+                print("  [Episode 1] Resetting environment...")
             status, mask = self.env.reset()
             done = False
             t = 0
 
             while not done and t < horizon:
-                a_t = self.select_action(status)  # [n_actions]
+                if ep == 0 and t == 0:
+                    print(f"  [Episode 1, Step 1] Selecting action (this calls MILP solver)...")
+                    a_t = self.select_action(status, verbose=True)  # [n_actions]
+                    print(f"  [Episode 1, Step 1] Action selected, executing step...")
+                else:
+                    a_t = self.select_action(status)  # [n_actions]
                 next_status, next_mask, reward, done = self.env.step(
                     a_t.detach().cpu().numpy().astype(int)
                 )
@@ -478,6 +511,7 @@ class DQNSolver:
         plt.ylabel("loss")
         plt.title(f"DQN graph+MILP loss n={self.n_actions} budget={self.budget}")
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        os.makedirs("plots", exist_ok=True)
         plt.savefig(f"plots/dqn_frontier_graph_mip_loss_{timestamp}.png")
         plt.close()
 
