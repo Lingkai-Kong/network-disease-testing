@@ -267,7 +267,8 @@ class DQNSolver:
         self.budget = env.budget
 
         # DQN hyperparams
-        self.GAMMA = 0.99
+        # Use environment's discount_factor when available to match disease setting
+        self.GAMMA = float(getattr(env, "discount_factor", 0.99))
         self.EPS_START = 0.9
         self.EPS_END = 0.05
         self.EPS_DECAY = 1000
@@ -461,13 +462,9 @@ class DQNSolver:
     # --------------------------------------------------------
     # Training loop
     # --------------------------------------------------------
-    def training_loop(self, horizon: int | None = None):
-        if horizon is None:
-            horizon = self.env.n  # reveal all eventually if you want
-
+    def training_loop(self):
         print("----------- begin main loop")
         print(f"  episodes: {self.N_EPISODES}")
-        print(f"  horizon: {horizon} steps/episode")
         print(f"  replay capacity: {self.MEMORY_SIZE}")
         print(f"  device: {device}")
         print("  starting episode 1...")
@@ -479,7 +476,7 @@ class DQNSolver:
             done = False
             t = 0
 
-            while not done and t < horizon:
+            while not done:
                 if ep == 0 and t == 0:
                     print(f"  [Episode 1, Step 1] Selecting action (this calls MILP solver)...")
                     a_t = self.select_action(status, verbose=True)  # [n_actions]
@@ -518,10 +515,10 @@ class DQNSolver:
     # --------------------------------------------------------
     # Public entry
     # --------------------------------------------------------
-    def train(self, horizon: int | None = None):
+    def train(self):
         """
         Run the full DQN training loop. Returns the trained policy_net.
         """
         print("----------- training DQN (graph + MILP)")
-        self.training_loop(horizon=horizon)
+        self.training_loop()
         return self.policy_net
