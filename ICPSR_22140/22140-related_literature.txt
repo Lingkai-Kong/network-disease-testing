@@ -1,0 +1,182 @@
+Bibliography
+HIV Transmission Network Metastudy Project: An Archive of Data From Eight
+Network Studies, 1988--2001
+
+This bibliography includes published and unpublished works that are related 
+to ICPSR study 22140. It includes works that are based on primary
+or secondary analysis of the data, or which describe or critique those
+data or the collection methodology. 
+
+If you publish a work or know of other works that are based on these data,
+please send the complete citation and name of the ICPSR study used to:
+icpsr-biblio-notify@umich.edu 
+
+
+1. Adams, Jimi; Moody, James, "To tell the truth: Measuring concordance in
+multiply reported network data." Social Networks. Jan 2007, 29, (1), 44 -
+58. DOI: 10.1016/j.socnet.2005.11.009
+
+2. Almquist, Zack W., "Large-scale spatial network models: An application
+to modeling information diffusion through the homeless population of San
+Francisco." Environment and Planning B: Urban Analytics and City Science.
+Mar 2020, 47, (3), 523 - 540. DOI: 10.1177/2399808318785375
+
+3. Bell, D.C., "Evolution of parental caregiving." Personality and Social
+Psychology Review. 2001, 5, (3), 216 - 229. DOI:
+10.1207/S15327957PSPR0503_3
+
+4. Bell, D.C.; Richard, A.J., "Caregiving: The forgotten element in
+attachment." Psychological Inquiry. 11, (2), 69 - 83. DOI:
+10.1207/S15327965PLI1102_01
+
+5. Bell, David C.; Atkinson, John S.; Mosier, Victoria; Riley, Micah;
+Brown, Victoria L., "The HIV transmission gradient: Relationship patterns
+of protection." AIDS and Behavior. Nov 2007, 11, (6), 789 - 811. DOI:
+10.1007/s10461-006-9192-5
+
+6. Bell, David C.; Montoya, Isaac D.; Atkinson, John S., "Partner
+concordance in reports of joint risk behaviors." JAIDS: Journal of Acquired
+Immune Deficiency Syndromes. 2000, 25, 173 - 181. DOI: 10.1097/00042560-
+200010010-00012
+
+7. Bell, David C.; Yang, Su-Jau; Lee, Doohee; Heath, Victoria,
+"Relationships and diseases among drug users and nonusers." Journal of
+Urban Health. Jun 2001, 78, (2), 313 - 326.
+
+8. Chakraborty, A.; Chatterjee, A.; Dalal, A., "PrIsing: Privacy-Preserving
+Peer Effect Estimation via Ising Model." arXiv, 2024.. DOI:
+10.48550/arXiv.2401.16596
+
+9. Chakraborty, Abhinav; Chatterjee, A.; Dalal, A., "PrIsing: Privacy-
+Preserving Peer Effect Estimation via Ising Model." Presented at the 27th
+International Conference on Artificial Intelligence and Statistics
+(AISTATS) 2024, Valencia, Spain, May 2-4, 2024.
+Abstract: https://www.scopus.com/inward/record.uri?eid=2-s2.0-85194146323&partnerID=40&md5=e6f2ee6caaf45de36371153f8153c8bb
+
+10. Curtis, R.; Friedman, S.R.; Neaigus, A.; Jose, B.; Goldstein, M.F.;
+Ildefonso, G., "Street-level drug markets: Network structure and HIV risk."
+Social Networks. Jul-Oct 1995, 17, (3-4), 229 - 249. DOI: 10.1016/0378-
+8733(95)00264-O
+Abstract: https://www.scopus.com/inward/record.uri?eid=2-s2.0-85194146323&partnerID=40&md5=e6f2ee6caaf45de36371153f8153c8bb
+
+11. Garcia, John A., "The race project: Researching race in the social
+sciences researchers, measures, and scope of studies." Journal of Race,
+Ethnicity, and Politics. Sep 2017, 2, (2), 300 - 346. DOI:
+10.1017/rep.2017.15
+Abstract: https://www.scopus.com/inward/record.uri?eid=2-s2.0-85194146323&partnerID=40&md5=e6f2ee6caaf45de36371153f8153c8bb
+
+12. Handcock, Mark S., "Stability and degeneracy of network models." In
+Weidman, Scott T., Proceedings of a Workshop on Statistics on Networks. 343
+- 374, Washington, DC: National Academies Press,2007.
+Abstract: https://www.scopus.com/inward/record.uri?eid=2-s2.0-85194146323&partnerID=40&md5=e6f2ee6caaf45de36371153f8153c8bb
+
+13. He, Yinhan; Chen, Chen; Wang, Song; Min, Guanghui; Li, Jundong,
+"Demystify Epidemic Containment in Directed Networks: Theory and
+Algorithms." Presented at the Eighteenth ACM International Conference on
+Web Search and Data Mining, Association for Computing Machinery, Hannover,
+Germany, Mar 10-14, 2025. DOI: 10.1145/3701551.3703575
+Abstract: https://www.scopus.com/inward/record.uri?eid=2-s2.0-85194146323&partnerID=40&md5=e6f2ee6caaf45de36371153f8153c8bb
+
+14. Jia, Junteng; Benson, Austion R., "Residual Correlation in Graph Neural
+Network Regression." Presented at the 26th ACM SIGKDD International
+Conference on Knowledge Discovery and Data Mining [virtual], KDD, Jul 6-10,
+2020. DOI: 10.1145/3394486.3403101
+Abstract: https://www.scopus.com/inward/record.uri?eid=2-s2.0-85194146323&partnerID=40&md5=e6f2ee6caaf45de36371153f8153c8bb
+
+15. Klovdahl, A.S.; Potterat, J.; Woodhouse, D.; Muth, J.; Muth, S.;
+Darrow, W.W., "HIV infection in an urban social network: A progress
+report." BMS: Bulletin of Sociological Methodology. Sep 1992, (36), 24 -
+33.
+Full text: https://www.jstor.org/stable/24311213
+
+16. Landry, Nicholas W.; adams, jimi, "On Limitations of Uniplex Networks
+for Modeling Multiplex Contagion." Preprint. arXiv, Jan 20, 2023.. DOI:
+10.48550/arXiv.2204.12348
+Full text: https://www.jstor.org/stable/24311213
+
+17. Landry, Nicholas W.; adams, jimi, "On limitations of uniplex networks
+for modeling multiplex contagion." PLOS One. 2023, 18, (1), e0279345. DOI:
+10.1371/journal.pone.0279345
+Full text: https://www.jstor.org/stable/24311213
+
+18. Latkin, C.A.; Curry, A., "Stressful neighborhoods and depression: A
+prospective study of the impact of neighborhood disorder." Journal of
+Health and Social Behavior. 2003, 44, (1), 34 - 44.
+Full text: https://www.jstor.org/stable/24311213
+
+19. Lee, Doohee; Bell, David C.; Hinojosa, Marilyn, "Drug use, travel, and
+HIV risk." AIDS Care. 2002, 14, 443 - 453.
+Full text: https://www.jstor.org/stable/24311213
+
+20. Morris, Martina, "Network dynamism: History and lessons of the Colorado
+Springs Study." In Potterat, J.J.; Woodhouse, D.E.; Muth, S.Q.; Rothenberg,
+R.B.; Darrow, W.W.; Klovdahl, A.S.; Muth, J.B., Network Epidemiology: A
+Handbook for Survey Design and Data Collection. 87 - 114, New York: Oxford
+University Press, Inc.,2004. DOI: 10.1093/0199269017.003.0006
+Full text: https://www.jstor.org/stable/24311213
+
+21. Neaigus, A.; Friedman, S.R.; Curtis, R.; Des Jarlais, D.C.; Furst,
+R.T.; Jose, B.; Mota, P.; Stepherson, B.; Sufian, M.; Ward, T.; Wright,
+J.W., "The relevance of drug injectors' social networks and risk networks
+for understanding and preventing HIV infection." Social Science and
+Medicine. Jan 1994, 38, (1), 67 - 78. DOI: 10.1016/0277-9536(94)90301-8
+Full text: https://www.jstor.org/stable/24311213
+
+22. Neaigus, A.; Friedman, S.R.; Goldstein, M.F.; Ildefonso, G.; Curtis,
+R.; Jose, B., "Using dyadic data for a network analysis of HIV infection
+and risk behaviors among injecting drug users." In Needle, Richard; Coyle,
+Susan L.; Genser, Sander G.; Trotter, Robert T., II, Social Networks, Drug
+Abuse, and HIV Transmission. NIDA Research Monograph Series 151. 20 - 37,
+Rockville, MD: United States Department of Health and Human Services,
+National Institute on Drug Abuse,1995.
+Full text: https://www.jstor.org/stable/24311213
+
+23. Neaigus, A.; Friedman, S.R.; Jose, B.; Goldstein, M.F.; Curtis, R.;
+Ildefonso, G.; Des Jarlais, D.C., "High-risk personal networks and syringe
+sharing as risk factors for HIV infection among new drug injectors."
+Journal of Acquired Immune Deficiency Syndromes and Human Retrovirology.
+Apr 15, 1996, 11, (5), 499 - 509. DOI: 10.1097/00042560-199604150-00011
+Full text: https://www.jstor.org/stable/24311213
+
+24. Parulian, Nikolaus N.; Lu, Tiffany; Mishra, Shubhanshu; Avram, Mihai;
+Diesner, Jana, "Effectiveness of the execution and prevention of metric-
+based adversarial attacks on social network data." Information (Basel).
+2020, 11, (6), 306. DOI: 10.3390/info11060306
+Full text: https://www.jstor.org/stable/24311213
+
+25. Rothenberg, Richard; Baldwin, Julie; Trotter, Robert; Muth, Stephan,
+"The risk environment for HIV transmission: Results from the Atlanta and
+Flagstaff Network Studies." Journal of Urban Health. Sep 2001, 78, (3),.
+DOI: 10.1093/jurban/78.3.419
+Full text: https://www.jstor.org/stable/24311213
+
+26. Smith, Jeffrey A.; Burow, Jessica, "Using ego network data to inform
+agent-based models of diffusion." Sociological Methods and Research. Nov
+2020, 49, (4), 1018 - 1063. DOI: 10.1177/0049124118769100
+Full text: https://www.jstor.org/stable/24311213
+
+27. Smith, Jeffrey A.; Moody, James, "Structural effects of network
+sampling coverage I: Nodes missing at random." Social Networks. Oct 2013,
+35, (4), 652 - 668. DOI: 10.1016/j.socnet.2013.09.003
+Full text: https://www.jstor.org/stable/24311213
+
+28. Smith, Jeffrey A.; Moody, James; Morgan, Jonathan H., "Network sampling
+coverage II: The effect of non-random missing data on network measurement."
+Social Networks. Jan 2017, 48, 78 - 99. DOI: 10.1016/j.socnet.2016.04.005
+Full text: https://www.jstor.org/stable/24311213
+
+29. Smith, Jeffrey A.; Morgan, Jonathan H.; Moody, James, "Network sampling
+coverage III: Imputation of missing network data under different network
+and missing data conditions." Social Networks. Jan 2022, 68, 148 - 178.
+DOI: 10.1016/j.socnet.2021.05.002
+Full text: https://www.jstor.org/stable/24311213
+
+30. Taborsky, P.; Vermue, L.; Korzepa, M.; Morup, M., "The Bayesian cut."
+IEEE Transactions on Pattern Analysis and Machine Intelligence. Nov 2021,
+43, (11), 4111 - 4124. DOI: 10.1109/TPAMI.2020.2994396
+Full text: https://www.jstor.org/stable/24311213
+
+31. Wylie, J.L.; Cabral, T.; Jolly, A.M., "Identifying STI transmission
+networks: A molecular, geographic, and social network analysis." Journal of
+Infectious Diseases. 2004, 191, (6), 899 - 906.
+Full text: https://www.jstor.org/stable/24311213

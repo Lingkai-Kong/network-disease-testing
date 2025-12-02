@@ -41,3 +41,8 @@ gurobi.lic
 # Logs
 *.log
 
+results/*
+results/**/*
+logs/*
+*.md
+*.pyc

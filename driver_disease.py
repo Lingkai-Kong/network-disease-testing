@@ -52,6 +52,53 @@ if not os.path.exists(results_root):
 
 
 if __name__ == '__main__':
+    # Verify Gurobi license early
+    import os
+    import socket
+    try:
+        import gurobipy as gp
+        # Try to create a simple model to verify license
+        test_model = gp.Model("license_test")
+        test_model.dispose()
+        print('✓ Gurobi license verified')
+    except gp.GurobiError as e:
+        error_str = str(e).lower()
+        if "license" in error_str or "hostid" in error_str or "host id" in error_str:
+            print(f'\n{"="*60}')
+            print('⚠ Gurobi License Error Detected')
+            print(f'{"="*60}')
+            print(f'Error: {e}')
+            print(f'\nCurrent hostname: {socket.gethostname()}')
+            print(f'GRB_LICENSE_FILE: {os.environ.get("GRB_LICENSE_FILE", "Not set")}')
+            print(f'GUROBI_LICENSE_SERVER: {os.environ.get("GUROBI_LICENSE_SERVER", "Not set")}')
+            print(f'\n{"="*60}')
+            print('SOLUTION: Use a Gurobi License Server')
+            print(f'{"="*60}')
+            print('\nThis error occurs because:')
+            print('  - Compute nodes have different host IDs than login nodes')
+            print('  - Your license file is tied to a specific host ID (163b78fb)')
+            print('  - The compute node has a different host ID (e1d6e481)')
+            print('\nTo fix this, you need a Gurobi license server:')
+            print('\n1. Contact your cluster administrator to set up a Gurobi license server')
+            print('   OR check if one already exists for your cluster')
+            print('\n2. Once you have the license server address, set it before running:')
+            print('   export GUROBI_LICENSE_SERVER="PORT@SERVER"')
+            print('   export GRB_LICENSE_FILE="PORT@SERVER"')
+            print('\n   Example:')
+            print('   export GUROBI_LICENSE_SERVER="7010@gurobi-license.fas.harvard.edu"')
+            print('   export GRB_LICENSE_FILE="7010@gurobi-license.fas.harvard.edu"')
+            print('\n3. Or add it to your sbatch script:')
+            print('   #SBATCH --export=GUROBI_LICENSE_SERVER="PORT@SERVER"')
+            print('\n4. Alternative: Get a floating license from Gurobi that works across nodes')
+            print(f'\n{"="*60}')
+            print('The job will continue, but DQN training will fail when Gurobi is needed.')
+            print('Please configure the license server before running DQN models.')
+            print(f'{"="*60}\n')
+        else:
+            print(f'⚠ Gurobi Error: {e}')
+    except Exception as e:
+        print(f'⚠ Could not verify Gurobi license: {e}')
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', '-s', help='random seed', type=int, default=0)
     parser.add_argument('--std_name', '-D', help='disease type {HIV, Gonorrhea, Chlamydia, Syphilis, Hepatitis}', 
@@ -135,6 +182,77 @@ if __name__ == '__main__':
 
     start_time = datetime.datetime.now()
     algo_rewards = OrderedDict()
+    
+    # Create run directory early for incremental saving
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    run_dir_name = f'{prefix}{std_name}_T{cc_threshold}_B{budget}_seed{args.seed}_{timestamp}'
+    run_dir = os.path.join(results_root, run_dir_name)
+    os.makedirs(run_dir, exist_ok=True)
+    
+    # Initialize summary and trajectory files
+    summary_file = os.path.join(run_dir, 'summary.csv')
+    traj_file = os.path.join(run_dir, 'trajectories.csv')
+    
+    # Helper function to save results incrementally
+    def save_model_results(algo_name, rewards_1d, model_start_time=None):
+        """Save results for a single model incrementally"""
+        gamma = discount
+        rewards = np.asarray(rewards_1d, dtype=float)
+        total_steps = rewards.size
+        horizon_algo = total_steps // n_episodes_eval
+        rewards_2d = rewards.reshape(n_episodes_eval, horizon_algo)
+        
+        # Compute discounted metrics
+        discounts = (gamma ** np.arange(horizon_algo))[None, :]
+        disc_immediate = rewards_2d * discounts
+        cum_disc = disc_immediate.cumsum(axis=1)
+        final_disc = cum_disc[:, -1]
+        mean_final = final_disc.mean()
+        sem_final = stats.sem(final_disc) if n_episodes_eval > 1 else 0.0
+        
+        # Update summary CSV
+        summary_row = {
+            'seed': args.seed,
+            'std_name': std_name,
+            'cc_threshold': cc_threshold,
+            'inst_idx': inst_idx,
+            'n_nodes': env.n,
+            'budget': budget,
+            'n_episodes_eval': n_episodes_eval,
+            'algo': algo_name,
+            'disc_mean': mean_final,
+            'disc_sem': sem_final,
+            'timestamp': datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
+        }
+        if model_start_time:
+            summary_row['runtime_seconds'] = (datetime.datetime.now() - model_start_time).total_seconds()
+        
+        summary_df = pd.DataFrame([summary_row])
+        use_header = not os.path.exists(summary_file) or os.path.getsize(summary_file) == 0
+        summary_df.to_csv(summary_file, mode='a', index=False, header=use_header)
+        
+        # Update trajectory CSV
+        traj_rows = []
+        for ep in range(n_episodes_eval):
+            for t in range(horizon_algo):
+                traj_rows.append({
+                    'seed': args.seed,
+                    'std_name': std_name,
+                    'cc_threshold': cc_threshold,
+                    'inst_idx': inst_idx,
+                    'n_nodes': env.n,
+                    'budget': budget,
+                    'algo': algo_name,
+                    'episode': ep,
+                    'step': t,
+                    'reward': rewards_2d[ep, t],
+                    'discounted_cum_reward': cum_disc[ep, t],
+                })
+        traj_df = pd.DataFrame(traj_rows)
+        use_header_traj = not os.path.exists(traj_file) or os.path.getsize(traj_file) == 0
+        traj_df.to_csv(traj_file, mode='a', index=False, header=use_header_traj)
+        
+        print(f'  ✓ Saved results for {algo_name} (mean={mean_final:.2f}, sem={sem_final:.2f})')
 
     # Non-DQN baselines
     baseline_registry = {
@@ -158,7 +276,7 @@ if __name__ == '__main__':
     print('--------------------------------------------------------')
     print('Run Baselines')
     print('--------------------------------------------------------')
-    for name in tqdm(model_names, desc="Baselines/Models"):
+    for name in model_names:
         if name in ('iter_dqn', 'dqn_mip'):
             # DQN-based models handled after training
             continue
@@ -166,38 +284,68 @@ if __name__ == '__main__':
             print(f'  [warning] unknown or unsupported model "{name}", skipping.')
             continue
         label, fn = baseline_registry[name]
-        print(f'  -> {label}')
+        print(f'\n  -> Running {label}...')
+        model_start = datetime.datetime.now()
+        # Use tqdm with file=sys.stdout to ensure it shows in log files
         algo_rewards[label] = fn()
+        print(f'  ✓ Completed {label}')
+        # Save results immediately after model completes
+        save_model_results(label, algo_rewards[label], model_start)
 
     print('--------------------------------------------------------')
     print('Train DQN Solver')
     print('--------------------------------------------------------')
 
-    start_time = datetime.datetime.now()
+    dqn_start_time = datetime.datetime.now()
     dqn_net = None
     dqn_runtime = None
 
     # Train DQN only if at least one DQN-based model is requested
     if run_dqn:
-        print('Initializing DQN solver...')
+        # Check CUDA availability and set device
+        print('\nChecking CUDA availability...')
+        cuda_available = torch.cuda.is_available()
+        if cuda_available:
+            print(f'  ✓ CUDA is available')
+            print(f'  Device: {torch.cuda.get_device_name(0)}')
+            print(f'  CUDA version: {torch.version.cuda}')
+            print(f'  GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB')
+            # Ensure we're using GPU
+            torch.cuda.set_device(0)
+            print(f'  Using GPU for DQN training')
+        else:
+            print('  ⚠ CUDA is not available, using CPU (training will be slower)')
+        
+        print('\nInitializing DQN solver...')
         dqn_solver = DQNSolver(env)
         print('✓ DQN solver initialized')
-        print('Starting training...')
+        print('Starting training (this may take a while)...')
+        print('  Progress will be shown below:')
         dqn_net = dqn_solver.train()
         dqn_end_time = datetime.datetime.now()
-        dqn_runtime = (dqn_end_time - start_time).total_seconds()
+        dqn_runtime = (dqn_end_time - dqn_start_time).total_seconds()
+        print(f'\n✓ DQN training completed in {dqn_runtime:.1f} seconds')
 
         if run_dqn_mip:
-            print('--------------------------------------------------------')
+            print('\n--------------------------------------------------------')
             print('Evaluate DQN-MIP')
             print('--------------------------------------------------------')
+            print('Running DQN-MIP evaluation...')
+            mip_start = datetime.datetime.now()
             mipper = Net2MIPPerScenario
             algo_rewards['DQN MIP'] = MIP_results(env, dqn_net, mipper, init_states)
+            print('✓ Completed DQN-MIP')
+            # Save results immediately after model completes
+            save_model_results('DQN MIP', algo_rewards['DQN MIP'], mip_start)
 
         if run_iter_dqn:
-            print('Running iterative DQN baseline...')
+            print('\nRunning iterative DQN baseline...')
+            iter_dqn_start = datetime.datetime.now()
             algo_rewards['iterative DQN'] = baseline_iterative_dqn_disease(
                 env, dqn_net, init_states, horizon=horizon_steps)
+            print('✓ Completed iterative DQN')
+            # Save results immediately after model completes
+            save_model_results('iterative DQN', algo_rewards['iterative DQN'], iter_dqn_start)
     else:
         if run_iter_dqn or run_dqn_mip:
             print('WARNING: iter_dqn and/or dqn_mip requested but no DQN models were run.')
@@ -229,25 +377,17 @@ if __name__ == '__main__':
         sem_final = stats.sem(final_disc) if n_episodes_eval > 1 else 0.0
         discounted_stats[algo] = (mean_final, sem_final)
 
-    print('avg discounted rewards (sem)')
+    print('\navg discounted rewards (sem)')
     print(f'{std_name} disease testing  n={env.n}, budget={budget}, gamma={gamma}')
     for algo in algo_rewards:
         mean_final, sem_final = discounted_stats[algo]
         print(f'  {algo.ljust(18, " ")}  {mean_final:.2f}, {sem_final:.2f}')
 
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
     # --------------------------------------------------------
-    # Create a unique run directory under results/
+    # Save final summary with all models (for compatibility)
+    # Note: Individual model results are already saved incrementally above
     # --------------------------------------------------------
-    run_dir_name = f'{prefix}{std_name}_T{cc_threshold}_B{budget}_seed{args.seed}_{timestamp}'
-    run_dir = os.path.join(results_root, run_dir_name)
-    os.makedirs(run_dir, exist_ok=True)
-
-    # --------------------------------------------------------
-    # Save summary metrics (one row per run, all algorithms)
-    # --------------------------------------------------------
-    out_info = {
+    final_summary = {
         'seed': args.seed,
         'std_name': std_name,
         'cc_threshold': cc_threshold,
@@ -256,55 +396,19 @@ if __name__ == '__main__':
         'budget': budget,
         'n_episodes_eval': n_episodes_eval,
         'start_time': start_time.strftime('%Y-%m-%d_%H-%M-%S'),
-        'time': timestamp,
+        'end_time': datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
+        'total_runtime_seconds': (datetime.datetime.now() - start_time).total_seconds(),
         'dqn_runtime': dqn_runtime,
     }
     for algo in algo_rewards:
         mean_final, sem_final = discounted_stats[algo]
-        out_info[f'{algo}_disc_mean'] = mean_final
-        out_info[f'{algo}_disc_sem'] = sem_final
+        final_summary[f'{algo}_disc_mean'] = mean_final
+        final_summary[f'{algo}_disc_sem'] = sem_final
 
-    summary_df = pd.DataFrame([out_info])
-    summary_file = os.path.join(run_dir, 'summary.csv')
-    use_header = not os.path.exists(summary_file)
-    summary_df.to_csv(summary_file, mode='a', index=False, header=use_header)
-
-    # --------------------------------------------------------
-    # Save per-timestep rewards for all algorithms in a single CSV
-    # --------------------------------------------------------
-    traj_rows = []
-    for algo_name, rewards in algo_rewards.items():
-        rewards = np.asarray(rewards, dtype=float)
-        total_steps = rewards.size
-        horizon_steps_algo = per_algo_horizon[algo_name]
-        rewards_2d = rewards.reshape(n_episodes_eval, horizon_steps_algo)
-
-        # discounted cumulative rewards per episode
-        discounts = (gamma ** np.arange(horizon_steps_algo))[None, :]
-        disc_immediate = rewards_2d * discounts
-        cum_disc = disc_immediate.cumsum(axis=1)
-
-        for ep in range(n_episodes_eval):
-            for t in range(horizon_steps_algo):
-                traj_rows.append(
-                    {
-                        'seed': args.seed,
-                        'std_name': std_name,
-                        'cc_threshold': cc_threshold,
-                        'inst_idx': inst_idx,
-                        'n_nodes': env.n,
-                        'budget': budget,
-                        'algo': algo_name,
-                        'episode': ep,
-                        'step': t,
-                        'reward': rewards_2d[ep, t],
-                        'discounted_cum_reward': cum_disc[ep, t],
-                    }
-                )
-    traj_df = pd.DataFrame(traj_rows)
-    traj_file = os.path.join(run_dir, 'trajectories.csv')
-    use_header_traj = not os.path.exists(traj_file)
-    traj_df.to_csv(traj_file, mode='a', index=False, header=use_header_traj)
+    final_summary_df = pd.DataFrame([final_summary])
+    final_summary_file = os.path.join(run_dir, 'final_summary.csv')
+    final_summary_df.to_csv(final_summary_file, index=False)
+    print(f'\n✓ Final summary saved to: {final_summary_file}')
 
     # --------------------------------------------------------
     # Plot: fraction tested vs positive cases detected (per-policy curves)
@@ -434,6 +538,8 @@ if __name__ == '__main__':
     print('Experiment Complete')
     print('--------------------------------------------------------')
     print(f'Run directory: {run_dir}')
-    print(f'Summary saved to: {summary_file}')
-    print(f'Trajectories saved to: {traj_file}')
+    print(f'Individual model results: {summary_file}')
+    print(f'All trajectories: {traj_file}')
+    print(f'Final summary: {final_summary_file}')
     print(f'Plots saved to: {curve_file}')
+    print(f'\nNote: Results were saved incrementally after each model completed.')

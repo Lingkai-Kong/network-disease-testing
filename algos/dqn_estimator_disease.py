@@ -34,7 +34,11 @@ from torch_geometric.nn import NNConv, global_mean_pool
 from model2mip.net2mip import Net2MIPPerScenario
 from approximator.batch_graph_approximator import BatchGraphApproximator
 
+# Set device to GPU if available, otherwise CPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if torch.cuda.is_available():
+    # Ensure we use the first available GPU
+    torch.cuda.set_device(0)
 
 
 ##############################################################
@@ -282,7 +286,11 @@ class DQNSolver:
         self.MEMORY_SIZE = int(1e4)
         self.MEMOIZER_REFRESH = 5
 
-        if torch.cuda.is_available():
+        # For quick testing, use fewer episodes (can be overridden via environment variable)
+        quick_test = os.environ.get('DQN_QUICK_TEST', '0') == '1'
+        if quick_test:
+            self.N_EPISODES = 5  # Very quick test: 5 episodes
+        elif torch.cuda.is_available():
             self.N_EPISODES = 100
         else:
             self.N_EPISODES = 100
@@ -306,10 +314,14 @@ class DQNSolver:
 
         # networks (initialized in train())
         print('  [DQN Init] Creating neural networks...')
+        if torch.cuda.is_available():
+            print(f'  [DQN Init] Using GPU: {torch.cuda.get_device_name(0)}')
+        else:
+            print(f'  [DQN Init] Using CPU (GPU not available)')
         self.policy_net = PolicyQNet(node_in_dim, edge_in_dim, self.n_actions, g_dim=64, hidden=128).to(device)
         self.target_net = PolicyQNet(node_in_dim, edge_in_dim, self.n_actions, g_dim=64, hidden=128).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
-        print(f'  [DQN Init] Networks created (device: {device})')
+        print(f'  [DQN Init] Networks created and moved to device: {device}')
 
         print('  [DQN Init] Setting up optimizer and scheduler...')
         self.optimizer = optim.AdamW(self.policy_net.parameters(), lr=self.LR, eps=self.ADAM_EPS, amsgrad=True)
@@ -366,12 +378,15 @@ class DQNSolver:
 
             if verbose:
                 print(f"       Calling MILP solver (gap=0.02, time_limit=60s)...")
+            # Use shorter time limit for quick testing
+            quick_test = os.environ.get('DQN_QUICK_TEST', '0') == '1'
+            milp_time_limit = 5 if quick_test else 60
             results = self.approximator.approximate(
                 network=self.policy_net.action_mlp,       # MLP over [a, g_s]
                 mipper_cls=Net2MIPPerScenario,
                 n_scenarios=1,
                 gap=0.02,
-                time_limit=60,
+                time_limit=milp_time_limit,
                 threads=4,
                 scenario_embedding=g_s,                   # this is g(s)
                 scenario_probs=None,
@@ -424,12 +439,15 @@ class DQNSolver:
                     data_sp = self._build_graph_from_status(ns_np)
                     g_sp = self.target_net.embed_state(data_sp).detach().cpu().numpy().astype(np.float32)
 
+                    # Use shorter time limit for quick testing
+                    quick_test = os.environ.get('DQN_QUICK_TEST', '0') == '1'
+                    milp_time_limit = 5 if quick_test else 60
                     results = self.approximator.approximate(
                         network=self.target_net.action_mlp,
                         mipper_cls=Net2MIPPerScenario,
                         n_scenarios=1,
                         gap=0.02,
-                        time_limit=60,
+                        time_limit=milp_time_limit,
                         threads=4,
                         scenario_embedding=g_sp,
                         scenario_probs=None,

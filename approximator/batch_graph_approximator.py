@@ -134,7 +134,24 @@ class BatchGraphApproximator(Approximator):
         B = int(self.env.budget)
         mask = self._current_allowed_mask(n)
 
-        model = gp.Model("batch_graph_selection")
+        try:
+            model = gp.Model("batch_graph_selection")
+        except gp.GurobiError as e:
+            if "license" in str(e).lower() or "hostid" in str(e).lower():
+                error_msg = (
+                    f"\nGurobi License Error: {e}\n"
+                    f"This error occurs because the Gurobi license is tied to a specific host ID.\n"
+                    f"Compute nodes have different host IDs than login nodes.\n\n"
+                    f"Solutions:\n"
+                    f"1. Use a Gurobi license server (recommended for HPC clusters):\n"
+                    f"   export GUROBI_LICENSE_SERVER='port@server'\n"
+                    f"   export GRB_LICENSE_FILE='port@server'\n"
+                    f"2. Contact your cluster administrator for Gurobi license server setup\n"
+                    f"3. Use a floating license that works across nodes\n"
+                )
+                raise RuntimeError(error_msg) from e
+            else:
+                raise
         model.Params.OutputFlag = 0
 
         # Binary selection variables

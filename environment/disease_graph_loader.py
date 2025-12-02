@@ -68,8 +68,8 @@ def load_disease_graph_instance(
     Returns:
         Tuple of (G, covariates, theta_unary, theta_pairwise, statuses)
     """
-    # Path to ICPSR data (in parent directory)
-    base_path = Path(__file__).parent.parent.parent / "adaptive-frontier-exploration-on-graphs"
+    # Path to ICPSR data (in network-disease-testing directory)
+    base_path = Path(__file__).parent.parent
     data_path = base_path / "ICPSR_22140"
     
     # File paths
@@ -90,7 +90,7 @@ def load_disease_graph_instance(
     
     # Load theta parameters from checkpoint
     print(f"Loading theta parameters for {std_name}...")
-    checkpoint_path = base_path / f"ICPSR22140/checkpoints/{std_name}.pkl"
+    checkpoint_path = base_path / f"ICPSR_22140/checkpoints/{std_name}.pkl"
     
     if checkpoint_path.exists():
         print(f"  ✓ Found existing checkpoint: {checkpoint_path}")

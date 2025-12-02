@@ -8,8 +8,10 @@ These mirror the classic RMAB baselines but operate directly on
 from __future__ import annotations
 
 from typing import Callable, List, Optional
+import sys
 
 import numpy as np
+from tqdm import tqdm
 
 from environment.frontier_batch_env import BinaryFrontierEnvBatch
 
@@ -22,6 +24,7 @@ def _run_baseline(
     init_states: List[Optional[np.ndarray]],
     select_action_fn: ActionFn,
     horizon: Optional[int] = None,
+    model_name: str = "baseline",
 ) -> np.ndarray:
     """
     Shared episode runner for all heuristics.
@@ -32,19 +35,26 @@ def _run_baseline(
 
     rewards = np.zeros(horizon * n_episodes, dtype=float)
 
-    for ep in range(n_episodes):
-        status, _ = env.reset()
-        if init_states[ep] is not None:
-            env.status = init_states[ep].copy()
-            status = env.status.copy()
+    # Use tqdm with file=sys.stdout to ensure progress shows in log files
+    # mininterval=1.0 ensures updates at least every second
+    with tqdm(total=n_episodes, desc=f"{model_name:20s}", 
+              file=sys.stdout, mininterval=1.0, ncols=100) as pbar:
+        for ep in range(n_episodes):
+            status, _ = env.reset()
+            if init_states[ep] is not None:
+                env.status = init_states[ep].copy()
+                status = env.status.copy()
 
-        for t in range(horizon):
-            action = select_action_fn(env, status).astype(int)
-            next_status, _, reward, done = env.step(action)
-            rewards[ep * horizon + t] = reward
-            status = next_status
-            if done:
-                break
+            for t in range(horizon):
+                action = select_action_fn(env, status).astype(int)
+                next_status, _, reward, done = env.step(action)
+                rewards[ep * horizon + t] = reward
+                status = next_status
+                if done:
+                    break
+            
+            pbar.update(1)
+            pbar.set_postfix({"episode": ep + 1, "reward": f"{reward:.3f}"})
 
     return rewards
 
@@ -76,7 +86,7 @@ def baseline_null_action_disease(
     def select_action(_: BinaryFrontierEnvBatch, status: np.ndarray) -> np.ndarray:
         return np.zeros(len(status), dtype=int)
 
-    return _run_baseline(env, init_states, select_action, horizon)
+    return _run_baseline(env, init_states, select_action, horizon, model_name="null")
 
 
 def baseline_random_disease(
@@ -91,7 +101,7 @@ def baseline_random_disease(
     def select_action(env: BinaryFrontierEnvBatch, _: np.ndarray) -> np.ndarray:
         return env.random_feasible_action().astype(int)
 
-    return _run_baseline(env, init_states, select_action, horizon)
+    return _run_baseline(env, init_states, select_action, horizon, model_name="random")
 
 
 def baseline_myopic_disease(
@@ -118,7 +128,7 @@ def baseline_myopic_disease(
             action[idx] = 1
         return action
 
-    return _run_baseline(env, init_states, select_action, horizon)
+    return _run_baseline(env, init_states, select_action, horizon, model_name="myopic")
 
 
 def baseline_greedy_iterative_myopic_disease(
@@ -152,7 +162,7 @@ def baseline_greedy_iterative_myopic_disease(
             remaining_budget -= 1
         return action
 
-    return _run_baseline(env, init_states, select_action, horizon)
+    return _run_baseline(env, init_states, select_action, horizon, model_name="iter_myopic")
 
 
 def baseline_sampling_disease(
@@ -186,5 +196,5 @@ def baseline_sampling_disease(
             return np.zeros(len(status), dtype=int)
         return best_action.astype(int)
 
-    return _run_baseline(env, init_states, select_action, horizon)
+    return _run_baseline(env, init_states, select_action, horizon, model_name=f"sampling(k={n_samples})")
 

@@ -3,6 +3,7 @@ import copy
 import os
 import shutil
 import tempfile
+from pathlib import Path
 
 from multiprocessing import Pool
 
@@ -218,7 +219,8 @@ class ICPSR22140Processor:
         return self.merged_datasets[dataset_key]
 
     def get_theta_parameters(self, dataset_key: str) -> tuple[np.ndarray, np.ndarray]:
-        checkpoint_filename = f"ICPSR22140/checkpoints/{dataset_key}.pkl"
+        base_path = Path(__file__).parent.parent
+        checkpoint_filename = str(base_path / f"ICPSR_22140/checkpoints/{dataset_key}.pkl")
         if not os.path.exists(checkpoint_filename):
             self.fit_theta_parameters(dataset_key)
         _, _, theta_unary, theta_pairwise, _, _, _, _ = self._load_from_checkpoint(checkpoint_filename)
@@ -229,7 +231,8 @@ class ICPSR22140Processor:
     checkpoint_dict[(log_pseudolikelihood, step_idx)] = (theta_unary, theta_pairwise, m_unary, v_unary, m_pairwise, v_pairwise)
     """
     def fit_theta_parameters(self, std_name: str) -> None:
-        checkpoint_filename = f"ICPSR22140/checkpoints/{std_name}.pkl"
+        base_path = Path(__file__).parent.parent
+        checkpoint_filename = str(base_path / f"ICPSR_22140/checkpoints/{std_name}.pkl")
         os.makedirs(os.path.dirname(checkpoint_filename), exist_ok=True)
 
         covariates, statuses, G, _, _, _ = self.get_dataset_for_fitting_theta(std_name)

@@ -3,11 +3,13 @@ Iterative DQN baseline for the disease frontier environment.
 """
 
 from __future__ import annotations
+import sys
 
 from typing import List, Optional
 
 import numpy as np
 import torch
+from tqdm import tqdm
 
 from environment.frontier_batch_env import BinaryFrontierEnvBatch
 from algos.dqn_estimator_disease import GraphEnvAdapter, PolicyQNet
@@ -44,40 +46,45 @@ def baseline_iterative_dqn_disease(
     n_episodes = len(init_states)
     rewards = np.zeros(horizon * n_episodes, dtype=float)
 
-    for ep in range(n_episodes):
-        status, _ = env.reset()
-        if init_states[ep] is not None:
-            env.status = init_states[ep].copy()
-            status = env.status.copy()
+    with tqdm(total=n_episodes, desc="iterative DQN      ", 
+              file=sys.stdout, mininterval=1.0, ncols=100) as pbar:
+        for ep in range(n_episodes):
+            status, _ = env.reset()
+            if init_states[ep] is not None:
+                env.status = init_states[ep].copy()
+                status = env.status.copy()
 
-        for t in range(horizon):
-            data = adapter.build_graph(status)
-            action = np.zeros(env.n, dtype=int)
-            frontier = list(np.flatnonzero(env.frontier_mask_from_status(status)))
-            if frontier:
-                remaining_budget = env.budget if env.budget is not None else len(frontier)
-                remaining_budget = min(remaining_budget, len(frontier))
-                while remaining_budget > 0 and frontier:
-                    best_idx = None
-                    best_val = -np.inf
-                    for idx in frontier:
-                        cand = action.copy()
-                        cand[idx] = 1
-                        val = _estimate_q_reward(data, net, cand)
-                        if val > best_val:
-                            best_val = val
-                            best_idx = idx
-                    if best_idx is None:
-                        break
-                    action[best_idx] = 1
-                    frontier.remove(best_idx)
-                    remaining_budget -= 1
+            for t in range(horizon):
+                data = adapter.build_graph(status)
+                action = np.zeros(env.n, dtype=int)
+                frontier = list(np.flatnonzero(env.frontier_mask_from_status(status)))
+                if frontier:
+                    remaining_budget = env.budget if env.budget is not None else len(frontier)
+                    remaining_budget = min(remaining_budget, len(frontier))
+                    while remaining_budget > 0 and frontier:
+                        best_idx = None
+                        best_val = -np.inf
+                        for idx in frontier:
+                            cand = action.copy()
+                            cand[idx] = 1
+                            val = _estimate_q_reward(data, net, cand)
+                            if val > best_val:
+                                best_val = val
+                                best_idx = idx
+                        if best_idx is None:
+                            break
+                        action[best_idx] = 1
+                        frontier.remove(best_idx)
+                        remaining_budget -= 1
 
-            next_status, _, reward, done = env.step(action)
-            rewards[ep * horizon + t] = reward
-            status = next_status
-            if done:
-                break
+                next_status, _, reward, done = env.step(action)
+                rewards[ep * horizon + t] = reward
+                status = next_status
+                if done:
+                    break
+            
+            pbar.update(1)
+            pbar.set_postfix({"episode": ep + 1, "reward": f"{reward:.3f}"})
 
     return rewards
 
