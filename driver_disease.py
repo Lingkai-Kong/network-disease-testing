@@ -1,12 +1,16 @@
-""" Driver for Disease Graph DQN Testing
+"""
+Driver for Disease Graph DQN Testing
 
-To run:
-> conda activate AFEG
-> python driver_disease.py
-> python driver_disease.py -s 0 -D HIV -T 100 -B 5 -p experiment1_
+Main entry point that orchestrates:
+1. Data loading (ICPSR dataset)
+2. Environment creation (BinaryFrontierEnvBatch)
+3. Baseline algorithm execution
+4. DQN training and evaluation
+5. Results saving and visualization
 
-or 
-> ./run_dqn.sh
+Usage:
+    python driver_disease.py -D HIV -T 300 -B 5 -V 10
+    ./run.sh [THRESHOLD] [BUDGET] [SEED] [N_EVAL]
 """
 
 import os
@@ -52,52 +56,15 @@ if not os.path.exists(results_root):
 
 
 if __name__ == '__main__':
-    # Verify Gurobi license early
-    import os
-    import socket
+    # Verify Gurobi license
     try:
         import gurobipy as gp
-        # Try to create a simple model to verify license
         test_model = gp.Model("license_test")
         test_model.dispose()
         print('✓ Gurobi license verified')
-    except gp.GurobiError as e:
-        error_str = str(e).lower()
-        if "license" in error_str or "hostid" in error_str or "host id" in error_str:
-            print(f'\n{"="*60}')
-            print('⚠ Gurobi License Error Detected')
-            print(f'{"="*60}')
-            print(f'Error: {e}')
-            print(f'\nCurrent hostname: {socket.gethostname()}')
-            print(f'GRB_LICENSE_FILE: {os.environ.get("GRB_LICENSE_FILE", "Not set")}')
-            print(f'GUROBI_LICENSE_SERVER: {os.environ.get("GUROBI_LICENSE_SERVER", "Not set")}')
-            print(f'\n{"="*60}')
-            print('SOLUTION: Use a Gurobi License Server')
-            print(f'{"="*60}')
-            print('\nThis error occurs because:')
-            print('  - Compute nodes have different host IDs than login nodes')
-            print('  - Your license file is tied to a specific host ID (163b78fb)')
-            print('  - The compute node has a different host ID (e1d6e481)')
-            print('\nTo fix this, you need a Gurobi license server:')
-            print('\n1. Contact your cluster administrator to set up a Gurobi license server')
-            print('   OR check if one already exists for your cluster')
-            print('\n2. Once you have the license server address, set it before running:')
-            print('   export GUROBI_LICENSE_SERVER="PORT@SERVER"')
-            print('   export GRB_LICENSE_FILE="PORT@SERVER"')
-            print('\n   Example:')
-            print('   export GUROBI_LICENSE_SERVER="7010@gurobi-license.fas.harvard.edu"')
-            print('   export GRB_LICENSE_FILE="7010@gurobi-license.fas.harvard.edu"')
-            print('\n3. Or add it to your sbatch script:')
-            print('   #SBATCH --export=GUROBI_LICENSE_SERVER="PORT@SERVER"')
-            print('\n4. Alternative: Get a floating license from Gurobi that works across nodes')
-            print(f'\n{"="*60}')
-            print('The job will continue, but DQN training will fail when Gurobi is needed.')
-            print('Please configure the license server before running DQN models.')
-            print(f'{"="*60}\n')
-        else:
-            print(f'⚠ Gurobi Error: {e}')
     except Exception as e:
-        print(f'⚠ Could not verify Gurobi license: {e}')
+        print(f'⚠ Gurobi license check failed: {e}')
+        print('  Ensure GRB_LICENSE_FILE or GUROBI_LICENSE_SERVER is set')
     
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', '-s', help='random seed', type=int, default=0)

@@ -289,7 +289,7 @@ class DQNSolver:
         # For quick testing, use fewer episodes (can be overridden via environment variable)
         quick_test = os.environ.get('DQN_QUICK_TEST', '0') == '1'
         if quick_test:
-            self.N_EPISODES = 5  # Very quick test: 5 episodes
+            self.N_EPISODES = 20  # Increased from 5 to 20 for better training
         elif torch.cuda.is_available():
             self.N_EPISODES = 100
         else:
@@ -380,7 +380,7 @@ class DQNSolver:
                 print(f"       Calling MILP solver (gap=0.02, time_limit=60s)...")
             # Use shorter time limit for quick testing
             quick_test = os.environ.get('DQN_QUICK_TEST', '0') == '1'
-            milp_time_limit = 5 if quick_test else 60
+            milp_time_limit = 15 if quick_test else 60  # Increased from 5 to 15 for better MILP solutions
             results = self.approximator.approximate(
                 network=self.policy_net.action_mlp,       # MLP over [a, g_s]
                 mipper_cls=Net2MIPPerScenario,
@@ -441,7 +441,7 @@ class DQNSolver:
 
                     # Use shorter time limit for quick testing
                     quick_test = os.environ.get('DQN_QUICK_TEST', '0') == '1'
-                    milp_time_limit = 5 if quick_test else 60
+                    milp_time_limit = 15 if quick_test else 60  # Increased from 5 to 15 for better MILP solutions
                     results = self.approximator.approximate(
                         network=self.target_net.action_mlp,
                         mipper_cls=Net2MIPPerScenario,

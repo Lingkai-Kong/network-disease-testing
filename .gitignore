@@ -11,15 +11,23 @@ venv/
 env/
 ENV/
 
+# Data files
+ICPSR_22140.pkl
+*.pkl
+*.csv
+
+# Gurobi license (sensitive)
+gurobi.lic
+
 # Results and outputs
-results_disease/
+results/
+logs/
 plots/
 *.png
 *.pdf
 
-# Data files
-*.pkl
-*.csv
+# ICPSR data directory
+ICPSR_22140/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -35,14 +43,5 @@ plots/
 .DS_Store
 Thumbs.db
 
-# Gurobi license (sensitive)
-gurobi.lic
-
 # Logs
 *.log
-
-results/*
-results/**/*
-logs/*
-*.md
-*.pyc

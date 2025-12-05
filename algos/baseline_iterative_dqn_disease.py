@@ -55,10 +55,32 @@ def baseline_iterative_dqn_disease(
                 status = env.status.copy()
 
             for t in range(horizon):
+                # Check if all nodes are already tested
+                if env.tests_done >= env.n:
+                    break
+                
                 data = adapter.build_graph(status)
                 action = np.zeros(env.n, dtype=int)
                 frontier = list(np.flatnonzero(env.frontier_mask_from_status(status)))
-                if frontier:
+                
+                # Handle case where frontier is empty but nodes remain untested
+                if not frontier:
+                    untested_nodes = np.flatnonzero(status == -1)
+                    if len(untested_nodes) > 0:
+                        # Test untested nodes directly (should be root nodes of disconnected components)
+                        remaining_budget = env.budget if env.budget is not None else len(untested_nodes)
+                        remaining_budget = min(remaining_budget, len(untested_nodes))
+                        if remaining_budget > 0:
+                            selected = untested_nodes[:remaining_budget]
+                            action[selected] = 1
+                            if ep == 0 and t < 3:  # Only print for first few steps to avoid spam
+                                print(f"  [Iterative DQN Episode {ep+1}, Step {t+1}] WARNING: Frontier empty but {len(untested_nodes)} nodes untested. "
+                                      f"Testing {len(selected)} untested nodes directly.")
+                    else:
+                        # All nodes tested
+                        break
+                else:
+                    # Normal case: use Q-network to select best frontier nodes
                     remaining_budget = env.budget if env.budget is not None else len(frontier)
                     remaining_budget = min(remaining_budget, len(frontier))
                     while remaining_budget > 0 and frontier:
@@ -81,7 +103,20 @@ def baseline_iterative_dqn_disease(
                 rewards[ep * horizon + t] = reward
                 status = next_status
                 if done:
+                    # Verify all nodes are actually tested
+                    if env.tests_done < env.n:
+                        if ep == 0:  # Only print for first episode to avoid spam
+                            print(f"  [Iterative DQN Episode {ep+1}] WARNING: done=True but tests_done={env.tests_done} < n={env.n}")
+                    else:
+                        if ep == 0:  # Only print for first episode to avoid spam
+                            print(f"  [Iterative DQN Episode {ep+1}] Completed: all {env.n} nodes tested in {t+1} steps")
                     break
+            
+            # Final check: ensure all nodes were tested
+            if env.tests_done < env.n:
+                untested = env.n - env.tests_done
+                if ep == 0:  # Only print for first episode to avoid spam
+                    print(f"  [Iterative DQN Episode {ep+1}] WARNING: Episode ended with {untested} nodes untested (tests_done={env.tests_done}/{env.n})")
             
             pbar.update(1)
             pbar.set_postfix({"episode": ep + 1, "reward": f"{reward:.3f}"})
