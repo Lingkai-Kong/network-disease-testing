@@ -291,17 +291,25 @@ if __name__ == '__main__':
         dqn_net = dqn_solver.train()
         dqn_end_time = datetime.datetime.now()
         dqn_runtime = (dqn_end_time - dqn_start_time).total_seconds()
-        print(f'\n✓ DQN training completed in {dqn_runtime:.1f} seconds')
+        dqn_runtime_min = dqn_runtime / 60.0
+        dqn_runtime_hr = dqn_runtime / 3600.0
+        print(f'\n✓ DQN training completed')
+        print(f'  Total time: {dqn_runtime:.1f} seconds ({dqn_runtime_min:.1f} minutes, {dqn_runtime_hr:.2f} hours)')
 
         if run_dqn_mip:
             print('\n--------------------------------------------------------')
             print('Evaluate DQN-MIP')
             print('--------------------------------------------------------')
-            print('Running DQN-MIP evaluation...')
+            print(f'Running DQN-MIP evaluation on {n_episodes_eval} episodes...')
+            print(f'  This may take a while as each step solves a MILP optimization problem.')
             mip_start = datetime.datetime.now()
             mipper = Net2MIPPerScenario
             algo_rewards['DQN MIP'] = MIP_results(env, dqn_net, mipper, init_states)
+            mip_end = datetime.datetime.now()
+            mip_runtime = (mip_end - mip_start).total_seconds()
+            mip_runtime_min = mip_runtime / 60.0
             print('✓ Completed DQN-MIP')
+            print(f'  Evaluation time: {mip_runtime:.1f} seconds ({mip_runtime_min:.1f} minutes)')
             # Save results immediately after model completes
             save_model_results('DQN MIP', algo_rewards['DQN MIP'], mip_start)
 
