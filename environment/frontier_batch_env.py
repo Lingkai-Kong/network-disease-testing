@@ -63,7 +63,6 @@ class BinaryFrontierEnvBatch:
 
         # A cached valid mask that callers (e.g., DQN) may store after reset/step
         self._last_valid_mask_np: Optional[np.ndarray] = None
-        self.round_budget: Optional[int] = None
 
     # ---------- episode control ----------
 
@@ -85,12 +84,10 @@ class BinaryFrontierEnvBatch:
                 X[i] = int(self.rng.random() <= p1)
             return X
 
-    def reset(self, round_budget: Optional[int] = None) -> Tuple[np.ndarray, np.ndarray]:
+    def reset(self) -> Tuple[np.ndarray, np.ndarray]:
         self.tests_done = 0
         self.status[:] = -1
         self.world_X = self._sample_full_world()
-        # per-round budget optional; if None, unlimited this round
-        self.round_budget = int(round_budget) if round_budget is not None else None
         mask = self.frontier_mask_from_status(self.status)
         self._last_valid_mask_np = mask.copy()
         return self.status.copy(), mask
@@ -155,11 +152,10 @@ class BinaryFrontierEnvBatch:
         action_vector = np.asarray(action_vector, dtype=int)
         assert action_vector.shape == (self.n,)
         pre_mask = self.frontier_mask_from_status(self.status)
-        # ensure feasibility w.r.t frontier + (optional) round budget
+        # ensure feasibility w.r.t frontier
         assert np.all(action_vector[pre_mask == 0] == 0), "Chosen nodes must be from the current frontier."
         k = int(action_vector.sum())
-        if self.round_budget is not None:
-            assert k <= self.round_budget, "Exceeds current round budget."
+        assert k <= self.budget, f"Exceeds budget: {k} > {self.budget}"
 
         reward = 0.0
         for i in np.flatnonzero(action_vector):
@@ -167,8 +163,6 @@ class BinaryFrontierEnvBatch:
             reward += float(self.status[i])
 
         self.tests_done += k
-        if self.round_budget is not None:
-            self.round_budget -= k
 
         next_mask = self.frontier_mask_from_status(self.status)
         done = (self.tests_done == self.n)
@@ -202,10 +196,7 @@ class BinaryFrontierEnvBatch:
         """
         mask = self.allowed_mask().astype(bool)
         inds = np.flatnonzero(mask)
-        if self.round_budget is not None:
-            B = min(self.budget, self.round_budget)
-        else:
-            B = self.budget
+        B = self.budget
         k = min(B, len(inds))
         a = np.zeros(self.n, dtype=float)
         if k > 0:
@@ -221,10 +212,7 @@ class BinaryFrontierEnvBatch:
         a = np.asarray(a, dtype=float).copy()
         mask = self.allowed_mask().astype(bool)
         a[~mask] = 0.0
-        if self.round_budget is not None:
-            B = min(self.budget, self.round_budget)
-        else:
-            B = self.budget
+        B = self.budget
         if a.sum() > B:
             inds = np.flatnonzero(a > 0.5)
             if len(inds) > B:
